@@ -6,7 +6,8 @@
   "scripts": {
     "build": "tsc",
     "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "ts-node-dev src/index.ts | npx pino-pretty"
+    "dev": "ts-node-dev src/index.ts | npx pino-pretty",
+    "lint": "eslint . --ext .ts"
   },
   "keywords": [],
   "author": "alejandro.oviedo.g@gmail.com",

@@ -2,7 +2,7 @@ import { FastifyInstance, FastifyReply, FastifyRequest, RequestGenericInterface 
 import { constants as fsConstants, createReadStream, createWriteStream, promises as fs } from 'fs';
 import { resolve } from 'path';
 
-export default async function handler(fastify: FastifyInstance) {
+export default function handler(fastify: FastifyInstance): void {
   fastify.get('/:filename', {
     schema: {
       params: {
@@ -23,8 +23,8 @@ export default async function handler(fastify: FastifyInstance) {
         }
       }
     }
-  }, getLogFile)
-};
+  }, getLogFile);
+}
 
 async function getLogFile(req: FastifyRequest<Request>, reply: FastifyReply) {
   const filename = req.params.filename;

@@ -1,4 +1,4 @@
-import fastify from 'fastify'
+import fastify from 'fastify';
 import fileHandler from './file';
 
 const server = fastify({
@@ -9,8 +9,10 @@ server.register(fileHandler, { prefix: '/api'});
 
 server.listen(8080, (err, address) => {
   if(err) {
-    console.error(err)
-    process.exit(1)
+    server.log.error({
+      error: err
+    }, `Couldn't start the server`);
+    process.exit(1);
   }
 });
 
