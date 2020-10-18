@@ -12,6 +12,7 @@ module.exports = {
     'no-console': 2,
     'no-unused-vars': [0],
     '@typescript-eslint/no-unused-vars': [0],
-    'semi': ["error", "always"]
+    'semi': ['error', 'always'],
+    'quotes': ['error', 'single', { 'allowTemplateLiterals': true }]
   }
 };

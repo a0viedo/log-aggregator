@@ -1,10 +1,16 @@
-import fastify from 'fastify';
+import fastify, { FastifyInstance, FastifyPluginOptions, FastifyReply, FastifyRequest, RequestGenericInterface } from 'fastify';
 import fileHandler from './file';
+import { Server, IncomingMessage, ServerResponse } from 'http';
 
-const server = fastify({
+const server: FastifyInstance<
+  Server,
+  IncomingMessage,
+  ServerResponse
+> = fastify({
   logger: true
 });
 
+process.env.DELIMITER = process.env.DELIMITER || ';';
 server.register(fileHandler, { prefix: '/api'});
 
 server.listen(8080, (err, address) => {

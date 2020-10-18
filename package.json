@@ -13,10 +13,12 @@
   "author": "alejandro.oviedo.g@gmail.com",
   "license": "MIT",
   "dependencies": {
-    "fastify": "^3.6.0"
+    "fastify": "^3.6.0",
+    "uuid": "^8.3.1"
   },
   "devDependencies": {
     "@types/node": "^14.11.10",
+    "@types/uuid": "^8.3.0",
     "@typescript-eslint/eslint-plugin": "^4.4.1",
     "@typescript-eslint/parser": "^4.4.1",
     "eslint": "^7.11.0",
