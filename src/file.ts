@@ -7,7 +7,7 @@ import { Transform } from 'stream';
 import { Server, IncomingMessage, ServerResponse } from 'http';
 
 export default function (fastify: FastifyInstance, opts: FastifyPluginOptions, done: () => void): void {
-  fastify.get('/:filename', {
+  fastify.get('/regex/:filename', {
     schema: {
       params: {
         type: 'object',
@@ -33,6 +33,7 @@ export default function (fastify: FastifyInstance, opts: FastifyPluginOptions, d
 
 async function getLogFile(req: FastifyRequest<Request>, reply: FastifyReply) {
   const filename = req.params.filename;
+  const keyword = req.query.keyword;
 
   try {
     const resolvedPath = resolve('test', filename);
@@ -62,7 +63,23 @@ async function getLogFile(req: FastifyRequest<Request>, reply: FastifyReply) {
     req.log.info({
       path: resolvedPath
     }, 'Streaming file to response');
-    reply.send(createReadStream(sortedFilePath));
+
+    if(!keyword) {
+      reply.send(createReadStream(sortedFilePath));
+    } else {
+      const transformer = new Transform({
+        transform(chunk, enc, callback) {
+          const filtered = chunk.toString()
+            .split('\n')
+            .filter((line: string) => line.match(new RegExp(keyword)))
+            .join('\n');
+          this.push(filtered);
+          callback();
+        }
+      });
+      reply.send(createReadStream(sortedFilePath).pipe(transformer));
+    }
+
     (reply as any).raw.on('finish', () => {
       // TODO: schedule the file to be cleaned up or fire-and-forget the clean up process
     });
@@ -80,9 +97,8 @@ async function getLogFile(req: FastifyRequest<Request>, reply: FastifyReply) {
 
 interface Request {
   Querystring: {
-    first: number
-    last: number
-    keyword: string,
+    last: number | undefined
+    keyword: string | undefined,
   }
   Params: {
     filename: string
