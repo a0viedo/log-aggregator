@@ -13,6 +13,7 @@ module.exports = {
     'no-unused-vars': [0],
     '@typescript-eslint/no-unused-vars': [0],
     'semi': ['error', 'always'],
-    'quotes': ['error', 'single', { 'allowTemplateLiterals': true }]
+    'quotes': ['error', 'single', { 'allowTemplateLiterals': true }],
+    '@typescript-eslint/ban-ts-comment': [0],
   }
 };
