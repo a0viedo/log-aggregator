@@ -7,7 +7,9 @@ const server: FastifyInstance<
   IncomingMessage,
   ServerResponse
 > = fastify({
-  logger: true
+  logger: true,
+  connectionTimeout: 400000,
+  keepAliveTimeout: 400000
 });
 
 process.env.DELIMITER = process.env.DELIMITER || ';';
