@@ -7,8 +7,10 @@
     "build": "tsc",
     "test": "mocha -r ts-node/register test/**/*.test.ts",
     "test:coverage": "nyc mocha test/**/*.test.ts",
-    "debug": "ts-node-dev --inspect -- src/index.ts | npx pino-pretty",
-    "dev": "ts-node-dev -- src/index.ts | npx pino-pretty",
+    "debug": "ts-node-dev --inspect-brk -- src/index.ts | npx pino-pretty",
+    "start": "node -r dotenv/config dist/src/index.js",
+    "dev": "ts-node-dev -r dotenv/config --files -- src/index.ts | npx pino-pretty",
+    "dev:client": "PRIMARY=http://localhost:3000 READ_DIR=test-client2 ts-node-dev -r dotenv/config --files -- src/index.ts | npx pino-pretty",
     "lint": "eslint . --ext .ts"
   },
   "keywords": [],
@@ -16,6 +18,10 @@
   "license": "MIT",
   "dependencies": {
     "fastify": "^3.6.0",
+    "pino": "^6.7.0",
+    "socket.io": "^2.3.0",
+    "socket.io-client": "^2.3.1",
+    "socket.io-stream": "^0.9.1",
     "uuid": "^8.3.1"
   },
   "devDependencies": {
@@ -23,11 +29,15 @@
     "@types/chai-spies": "^1.0.2",
     "@types/mocha": "^8.0.3",
     "@types/node": "^14.11.10",
+    "@types/pino": "^6.3.3",
+    "@types/socket.io": "^2.1.11",
+    "@types/socket.io-client": "^1.4.34",
     "@types/uuid": "^8.3.0",
     "@typescript-eslint/eslint-plugin": "^4.4.1",
     "@typescript-eslint/parser": "^4.4.1",
     "chai": "^4.2.0",
     "chai-spies": "^1.0.0",
+    "dotenv": "^8.2.0",
     "eslint": "^7.11.0",
     "lorem-ipsum": "^2.0.3",
     "mocha": "^8.2.0",
@@ -45,6 +55,8 @@
     "include": [
       "src/**/*"
     ],
-    "require": ["ts-node/register"]
+    "require": [
+      "ts-node/register"
+    ]
   }
 }

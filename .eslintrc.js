@@ -15,5 +15,6 @@ module.exports = {
     'semi': ['error', 'always'],
     'quotes': ['error', 'single', { 'allowTemplateLiterals': true }],
     '@typescript-eslint/ban-ts-comment': [0],
+    '@typescript-eslint/no-var-requires': [0]
   }
 };
