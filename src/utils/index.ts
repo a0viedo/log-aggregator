@@ -2,7 +2,8 @@
 import { resolve } from 'path';
 import { v4 as uuidv4 } from 'uuid';
 import { spawn } from 'child_process';
-import { Transform } from 'stream';
+import { Readable, Stream, Transform } from 'stream';
+import { promises as fs, ReadStream, read as fsRead, close as fsClose, open as fsOpen } from 'fs';
 
 export function externalSort(filePath: string, keyword?: string, lastLines?: number): Promise<string> {
   const filename = uuidv4();
@@ -112,4 +113,55 @@ export function createFilterStreamByLine(keyword?: string, closeFn?: () => void,
     }
   });
   return filter;
+}
+
+type ReadOptions = {
+  size: number
+  bufferSize?: number
+}
+
+export class ReadStreamBackwards extends Readable {
+  filename: string;
+  size: number;
+  fd: number | null;
+  position: number;
+  bufferSize: number;
+  constructor(filename: string, opts: ReadOptions) {
+    super();
+    this.filename = filename;
+    this.size = opts.size;
+    this.fd = null;
+    this.position = opts.size;
+    this.bufferSize = opts.bufferSize || 1024 * 64;
+  }
+  _construct(callback: (e?: Error) => void): void {
+    fsOpen(this.filename, 'r', (err, fd) => {
+      if (err) {
+        callback(err);
+      } else {
+        this.fd = fd;
+        callback();
+      }
+    });
+  }
+  _read(n: number): void {
+    const length = Math.min(this.bufferSize, this.position);
+    const buf = Buffer.alloc(length);
+    this.position = this.position - length;
+    fsRead(this.fd!, buf, 0, length, this.position, (err, bytesRead) => {
+      const lines = buf.toString().split('\n').reverse();
+      if (err) {
+        this.destroy(err);
+      } else {
+        this.push(bytesRead > 0 ? lines.join('\n') : null);
+      }
+    });
+  }
+  _destroy(err: Error, callback: (e?: Error) => void): void {
+    if (this.fd) {
+      fsClose(this.fd, (er) => callback(er || err));
+    } else {
+      callback(err);
+    }
+  }
 }
