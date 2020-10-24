@@ -59,13 +59,11 @@ export function createFilterStream(keyword: string | undefined, closeFn?: () => 
 export function firstNLinesFromStream(closeFn: () => void, linesLimit: number) : Transform {
   let currentLines = 0;
   let finished = false;
-  // console.log('firstNLinesFromStream', linesLimit);
   const filter = new Transform({
     transform(chunk, enc, callback) {
       let lines = chunk.toString()
         .split('\n');
       if(currentLines + lines.length > linesLimit) {
-        // console.log('finished slicing', currentLines, lines.length, lines);
         lines = lines.slice(0, lines.length - (lines.length - (linesLimit - currentLines)));
         finished = true;
       }
@@ -74,6 +72,42 @@ export function firstNLinesFromStream(closeFn: () => void, linesLimit: number) :
       if(finished && closeFn) {
         closeFn();
       }
+      callback();
+    }
+  });
+  return filter;
+}
+
+export function createFilterStreamByLine(keyword?: string, closeFn?: () => void,  limit?: number) : Transform {
+  let currentLines = 0;
+  let finished = false;
+
+  const filter = new Transform({
+    transform(lineBuffer, enc, callback) {
+      const line = lineBuffer.toString();
+      if(currentLines === 0 && line === '') {
+        callback();
+        return;
+      }
+      if(limit && currentLines === limit) {
+        finished = true;
+      }
+
+      if(finished && closeFn) {
+        closeFn();
+        callback();
+        return;
+      }
+      if(keyword) {
+        if(line.match(new RegExp(keyword))) {
+          this.push(`${line}\n`);
+          currentLines++;
+        }
+      } else {
+        this.push(`${line}\n`);
+        currentLines++;
+      }
+
       callback();
     }
   });

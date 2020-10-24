@@ -10,7 +10,7 @@
     "debug": "ts-node-dev --inspect-brk -- src/index.ts | npx pino-pretty",
     "start": "node -r dotenv/config dist/src/index.js",
     "dev": "ts-node-dev -r dotenv/config --files -- src/index.ts | npx pino-pretty",
-    "dev:client": "PRIMARY=http://localhost:3000 READ_DIR=test-client2 ts-node-dev -r dotenv/config --files -- src/index.ts | npx pino-pretty",
+    "dev:client": "PRIMARY=http://localhost:3000 READ_DIR=test-client1 ts-node-dev -r dotenv/config --files -- src/index.ts | npx pino-pretty",
     "lint": "eslint . --ext .ts"
   },
   "keywords": [],
@@ -18,6 +18,7 @@
   "license": "MIT",
   "dependencies": {
     "fastify": "^3.6.0",
+    "fs-reverse": "0.0.3",
     "pino": "^6.7.0",
     "socket.io": "^2.3.0",
     "socket.io-client": "^2.3.1",

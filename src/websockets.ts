@@ -4,9 +4,10 @@ const ss = require('socket.io-stream');
 import { resolve } from 'path';
 import { createReadStream, createWriteStream, fstat, ReadStream, promises as fs } from 'fs';
 import { EventEmitter } from 'events';
-import { createFilterStream } from './utils';
+import { createFilterStream, createFilterStreamByLine } from './utils';
 import pino from 'pino';
 import { Readable } from 'stream';
+const fsR = require('fs-reverse');
 
 type SocketIncomingData = {
   filename: string
@@ -25,6 +26,11 @@ type SocketResponseData = {
 
 export const fileRequestResponses = new Map();
 
+function close(stream: ReadStream) {
+  stream.emit('end');
+  stream.destroy();
+}
+
 export function initializeWebSocketClient(logger: pino.Logger): void {
   const socket = ioClient.connect(process.env.PRIMARY as string);
   socket.on('connect', async() => {
@@ -41,8 +47,10 @@ export function initializeWebSocketClient(logger: pino.Logger): void {
       const filePath = resolve(process.env.READ_DIR as string, data.filename);
       await fs.access(filePath);
       ss(socket).emit('file-request-response', stream, data);
-      const readStream = createReadStream(filePath);
-      if (data.keyword) {
+      const readStream = fsR(filePath, { flags: 'r' });
+      if(data.last && data.keyword){
+        readStream.pipe(createFilterStreamByLine(data.keyword, close.bind(null, readStream), data.last)).pipe(stream);
+      } else if (data.keyword) {
         readStream.pipe(createFilterStream(data.keyword)).pipe(stream);
       } else {
         readStream.pipe(stream);
