@@ -126,13 +126,15 @@ export class ReadStreamBackwards extends Readable {
   fd: number | null;
   position: number;
   bufferSize: number;
+  private trailing: string;
   constructor(filename: string, opts: ReadOptions) {
     super();
     this.filename = filename;
     this.size = opts.size;
     this.fd = null;
     this.position = opts.size;
-    this.bufferSize = opts.bufferSize || 1024 * 64;
+    this.bufferSize = opts.bufferSize || 1024 * 1;
+    this.trailing = '';
   }
   _construct(callback: (e?: Error) => void): void {
     fsOpen(this.filename, 'r', (err, fd) => {
@@ -149,11 +151,38 @@ export class ReadStreamBackwards extends Readable {
     const buf = Buffer.alloc(length);
     this.position = this.position - length;
     fsRead(this.fd!, buf, 0, length, this.position, (err, bytesRead) => {
-      const lines = buf.toString().split('\n').reverse();
+      const lines = buf.toString().split('\n');
+      if(lines.length === 1 || (lines.length === 2 && lines[lines.length -1] === '')) {
+        // buffer this part until next newline
+        this.trailing = `${lines[0]}${this.trailing}`;
+        this.push('');
+        lines.length = 0;
+      } else {
+        if(lines[lines.length -1] !== '') {
+          // if there were trailing then add at the last read line
+          if(this.trailing !== '') {
+            lines[lines.length -1] = `${lines[lines.length -1]}${this.trailing}`;
+            this.trailing = '';
+          }
+
+        }
+
+        if(lines[0] !== '') {
+          this.trailing = lines.shift() as string;
+        }
+      }
       if (err) {
         this.destroy(err);
       } else {
-        this.push(bytesRead > 0 ? lines.join('\n') : null);
+        if(bytesRead > 0 && lines.length > 0) {
+          this.push(lines.reverse().join('\n'));
+        }
+        if(bytesRead === 0) {
+          if(this.trailing !== '') {
+            this.push(`\n${this.trailing}`);
+          }
+          this.push(null);
+        }
       }
     });
   }
