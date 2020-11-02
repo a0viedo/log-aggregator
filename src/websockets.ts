@@ -7,6 +7,7 @@ import { EventEmitter } from 'events';
 import { createFilterStream, createFilterStreamByLine, ReadStreamBackwards } from './utils';
 import pino from 'pino';
 import { Readable } from 'stream';
+import { createServer } from 'http';
 
 type SocketIncomingData = {
   filename: string
@@ -68,7 +69,7 @@ export function initializeWebSocketClient(logger: pino.Logger): void {
 }
 
 export function initializeWebSocketServer(logger: pino.Logger): io.Server {
-  const wsServer = io(Number(process.env.WS_PORT));
+  const wsServer = io(createServer().listen(Number(process.env.WS_PORT), '0.0.0.0'));
   wsServer.on('connection', (socket) => {
     logger.info('Received websocket connection');
     ss(socket).on('file-request-response', (stream: ReadStream, data: SocketResponseData) => {
