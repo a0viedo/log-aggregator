@@ -26,7 +26,7 @@ if (process.env.PRIMARY) {
 
   wsServer = initializeWebSocketServer(logger);
   httpServer.register(routes, { prefix: '/api', wsServer });
-  httpServer.listen(process.env.PORT || 8080, (err, address) => {
+  httpServer.listen(process.env.PORT || 8080, '0.0.0.0', (err, address) => {
     if (err) {
       httpServer.log.error({
         error: err
