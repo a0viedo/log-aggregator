@@ -8,7 +8,7 @@
     "test": "mocha -r ts-node/register test/**/*.test.ts",
     "test:coverage": "nyc mocha test/**/*.test.ts",
     "debug": "ts-node-dev --inspect-brk -- src/index.ts | npx pino-pretty",
-    "start": "node -r dotenv/config dist/src/index.js",
+    "start": "node -r dotenv/config dist/index.js",
     "dev": "ts-node-dev -r dotenv/config --files -- src/index.ts | npx pino-pretty",
     "dev:client": "PRIMARY=http://localhost:3000 READ_DIR=test-client2 ts-node-dev -r dotenv/config --files -- src/index.ts | npx pino-pretty",
     "lint": "eslint . --ext .ts"
