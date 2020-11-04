@@ -27,6 +27,10 @@ type SocketResponseData = {
 export const fileRequestResponses = new Map();
 
 function close(stream: ReadStream) {
+  if((stream as any)._readableState.ended) {
+    return;
+  }
+  (stream as any)._readableState.ended = true;
   stream.emit('end');
   stream.destroy();
 }

@@ -35,14 +35,13 @@ export function firstNLinesFromStream(closeFn: () => void, linesLimit: number) :
   let finished = false;
   const filter = new Transform({
     transform(chunk, enc, callback) {
-      let lines = chunk.toString()
-        .split('\n');
+      let lines = chunk.toString().split('\n');
       if(currentLines + lines.length > linesLimit) {
         lines = lines.slice(0, lines.length - (lines.length - (linesLimit - currentLines)));
         finished = true;
       }
       currentLines += lines.length;
-      this.push(lines.join('\n'));
+      this.push(appendNewLines(lines));
       if(finished && closeFn) {
         closeFn();
       }
@@ -54,7 +53,6 @@ export function firstNLinesFromStream(closeFn: () => void, linesLimit: number) :
 
 export function createFilterStream(keyword?: string, closeFn?: () => void,  limit?: number) : Transform {
   let currentLines = 0;
-  let finished = false;
 
   const filter = new Transform({
     transform(lineBuffer, enc, callback) {
@@ -63,11 +61,8 @@ export function createFilterStream(keyword?: string, closeFn?: () => void,  limi
         callback();
         return;
       }
-      if(limit && currentLines === limit) {
-        finished = true;
-      }
 
-      if(finished && closeFn) {
+      if(limit && closeFn && currentLines === limit) {
         closeFn();
         callback();
         return;

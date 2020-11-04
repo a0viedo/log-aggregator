@@ -148,7 +148,7 @@ describe('utils', () => {
     stream.pipe(firstNLinesFromStream(() => stream.emit('close'), 2)).on('data', d => {
       result += d.toString();
     }).on('end', () => {
-      expect(result).to.equal('hi\nsecond line');
+      expect(result).to.equal('hi\nsecond line\n');
       done();
     });
   });

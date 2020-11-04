@@ -39,12 +39,6 @@ async function getLogFile(req: FastifyRequest<Request>, reply: FastifyReply, wsS
   const keyword = req.query.keyword;
 
   try {
-    const resolvedPath = resolve(process.env.READ_DIR as string, filename);
-
-    req.log.info({
-      path: resolvedPath
-    }, 'Resolved path');
-
     const uniqueId = uuidv4();
     const ee = new EventEmitter();
     fileRequestResponses.set(uniqueId, {
