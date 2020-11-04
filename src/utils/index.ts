@@ -30,33 +30,6 @@ export function externalSort(filePath: string, keyword?: string, lastLines?: num
   });
 }
 
-export function createFilterStream(keyword: string | undefined, closeFn?: () => void,  lines?: number): Transform {
-  let currentLines = 0;
-  let finished = false;
-
-  const filter = new Transform({
-    transform(chunk, enc, callback) {
-      let lines = chunk.toString()
-        .split('\n');
-      if(keyword) {
-        lines = lines.filter((line: string) => line.match(new RegExp(keyword)));
-      }
-      if(lines && currentLines + lines.length > lines) {
-        // need to take out the extra from filtered and then close
-        lines = lines.slice(0, lines.length - (lines.length - (lines - currentLines)));
-        finished = true;
-      }
-      currentLines += lines.length;
-      this.push(lines.join('\n'));
-      if(finished && closeFn) {
-        closeFn();
-      }
-      callback();
-    }
-  });
-  return filter;
-}
-
 export function firstNLinesFromStream(closeFn: () => void, linesLimit: number) : Transform {
   let currentLines = 0;
   let finished = false;
@@ -79,14 +52,14 @@ export function firstNLinesFromStream(closeFn: () => void, linesLimit: number) :
   return filter;
 }
 
-export function createFilterStreamByLine(keyword?: string, closeFn?: () => void,  limit?: number) : Transform {
+export function createFilterStream(keyword?: string, closeFn?: () => void,  limit?: number) : Transform {
   let currentLines = 0;
   let finished = false;
 
   const filter = new Transform({
     transform(lineBuffer, enc, callback) {
-      const line = lineBuffer.toString();
-      if(currentLines === 0 && line === '') {
+      const chunk = lineBuffer.toString();
+      if(currentLines === 0 && chunk === '') {
         callback();
         return;
       }
@@ -100,13 +73,24 @@ export function createFilterStreamByLine(keyword?: string, closeFn?: () => void,
         return;
       }
       if(keyword) {
-        if(line.match(new RegExp(keyword))) {
-          this.push(`${line}\n`);
-          currentLines++;
+        let matches: Array<string> = chunk.split('\n').filter((line: string) => line.match(new RegExp(keyword)));
+        if(limit && currentLines + matches.length > limit) {
+          matches = matches.slice(0, limit - currentLines);
         }
+        this.push(appendNewLines(matches));
+        currentLines += matches.length;
       } else {
-        this.push(`${line}\n`);
-        currentLines++;
+        const numberOfLines = chunk.match(/\n/g).length;
+        if(limit && currentLines + numberOfLines > limit) {
+          const splitted = chunk.split('\n').slice(0, limit - currentLines);
+          const toAdd = splitted.map((l: string) => `${l}\n`).join('');
+          this.push(appendNewLines(splitted));
+          currentLines = limit;
+        } else {
+          this.push(chunk);
+          currentLines += chunk.match(/\n/g).length;
+        }
+
       }
 
       callback();
@@ -152,6 +136,9 @@ export class ReadStreamBackwards extends Readable {
     this.position = this.position - length;
     fsRead(this.fd!, buf, 0, length, this.position, (err, bytesRead) => {
       const lines = buf.toString().split('\n');
+      if(this.position === this.size - length && lines[lines.length-1] === '') {
+        lines.pop();
+      }
       if(lines.length === 1 || (lines.length === 2 && lines[lines.length -1] === '')) {
         // buffer this part until next newline
         this.trailing = `${lines[0]}${this.trailing}`;
@@ -175,11 +162,11 @@ export class ReadStreamBackwards extends Readable {
         this.destroy(err);
       } else {
         if(bytesRead > 0 && lines.length > 0) {
-          this.push(lines.reverse().join('\n'));
+          this.push(appendNewLines(lines.reverse()));
         }
         if(bytesRead === 0) {
           if(this.trailing !== '') {
-            this.push(`\n${this.trailing}`);
+            this.push(`${this.trailing}\n`);
           }
           this.push(null);
         }
@@ -193,4 +180,8 @@ export class ReadStreamBackwards extends Readable {
       callback(err);
     }
   }
+}
+
+function appendNewLines(arr: Array<string>): string {
+  return arr.map(l => `${l}\n`).join('');
 }

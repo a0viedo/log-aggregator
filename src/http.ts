@@ -1,7 +1,7 @@
 import { FastifyInstance, FastifyPluginOptions, FastifyReply, FastifyRequest, RequestGenericInterface } from 'fastify';
 import { constants as fsConstants, createReadStream, createWriteStream, promises as fs } from 'fs';
 import { resolve } from 'path';
-import { externalSort, createFilterStream, firstNLinesFromStream } from './utils';
+import { externalSort, firstNLinesFromStream } from './utils';
 import { fileRequestResponses } from './websockets';
 import {EventEmitter} from 'events';
 import io from 'socket.io';

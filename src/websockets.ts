@@ -4,7 +4,7 @@ const ss = require('socket.io-stream');
 import { resolve } from 'path';
 import { createReadStream, createWriteStream, fstat, ReadStream, promises as fs } from 'fs';
 import { EventEmitter } from 'events';
-import { createFilterStream, createFilterStreamByLine, ReadStreamBackwards } from './utils';
+import { createFilterStream, ReadStreamBackwards } from './utils';
 import pino from 'pino';
 import { Readable } from 'stream';
 import { createServer } from 'http';
@@ -47,11 +47,17 @@ export function initializeWebSocketClient(logger: pino.Logger): void {
       const filePath = resolve(process.env.READ_DIR as string, data.filename);
       const { size } = await fs.stat(filePath);
       ss(socket).emit('file-request-response', stream, data);
+      logger.info({ filepath: filePath }, 'Streaming file back to primary...');
       const readStream = new ReadStreamBackwards(filePath, { size }) as Readable;
+      readStream.on('end', () => {
+        logger.info({ filepath: filePath }, 'Finished sending file');
+      });
       if(data.last && data.keyword){
-        readStream.pipe(createFilterStreamByLine(data.keyword, close.bind(null, readStream as ReadStream), data.last)).pipe(stream);
+        readStream.pipe(createFilterStream(data.keyword, close.bind(null, readStream as ReadStream), data.last)).pipe(stream);
       } else if (data.keyword) {
         readStream.pipe(createFilterStream(data.keyword)).pipe(stream);
+      } else if (data.last) {
+        readStream.pipe(createFilterStream(undefined,  close.bind(null, readStream as ReadStream), data.last)).pipe(stream);
       } else {
         readStream.pipe(stream);
       }
@@ -70,6 +76,7 @@ export function initializeWebSocketClient(logger: pino.Logger): void {
 
 export function initializeWebSocketServer(logger: pino.Logger): io.Server {
   const wsServer = io(createServer().listen(Number(process.env.WS_PORT), '0.0.0.0'));
+  logger.info(`Websockets server listening on port ${process.env.WS_PORT}`);
   wsServer.on('connection', (socket) => {
     logger.info('Received websocket connection');
     ss(socket).on('file-request-response', (stream: ReadStream, data: SocketResponseData) => {

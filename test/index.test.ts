@@ -1,10 +1,11 @@
-import { externalSort, createFilterStream, firstNLinesFromStream } from '../src/utils';
+import { externalSort, firstNLinesFromStream, createFilterStream, ReadStreamBackwards } from '../src/utils';
 import childProcess from 'child_process';
 import { Readable } from 'stream';
 import {EventEmitter} from 'events';
 import { expect, use, spy } from 'chai';
 import spies from 'chai-spies';
 import { resolve } from 'path';
+import { promises as fs, createWriteStream } from 'fs';
 use(spies);
 
 describe('utils', () => {
@@ -74,17 +75,67 @@ describe('utils', () => {
     expect(command!.split('>')[0]).to.equal(`sort --temporary-directory ${tmpDir} -nr -t '${delimiter}' -k1 ${resolve(tmpDir, filePath)} | grep ${keyword} | head -n ${lines} `);
   });
 
-  it('should create a stream filter by filtering with a keyword', done => {
-    const stream = new Readable();
-    stream.setEncoding('utf-8');
-    stream.push('hi there\nthis is a line\nthis is another line');
-    stream.push(null);
-    let result = '';
-    stream.pipe(createFilterStream('this')).on('data', d => {
-      result += d.toString();
-    }).on('end', () => {
-      expect(result).to.equal('this is a line\nthis is another line');
-      done();
+  describe('createFilterStream', () => {
+    it('should create a stream filter without any parameters', done => {
+      const stream = new Readable();
+      stream.setEncoding('utf-8');
+      stream.push('hi there\nthis is a line\nthis is another line\n');
+      stream.push(null);
+      let result = '';
+      stream.pipe(createFilterStream()).on('data', d => {
+        result += d.toString();
+      }).on('end', () => {
+        expect(result).to.equal('hi there\nthis is a line\nthis is another line\n');
+        done();
+      });
+    });
+
+    it('should create a stream filter by filtering with a keyword', done => {
+      const stream = new Readable();
+      stream.setEncoding('utf-8');
+      stream.push('hi there\nthis is a line\nthis is another line\n');
+      stream.push(null);
+      let result = '';
+      stream.pipe(createFilterStream('this')).on('data', d => {
+        result += d.toString();
+      }).on('end', () => {
+        expect(result).to.equal('this is a line\nthis is another line\n');
+        done();
+      });
+    });
+
+    it('should create a stream filter by filtering by lines', done => {
+      const stream = new Readable();
+      stream.setEncoding('utf-8');
+      stream.push('hi there\nthis is a line\nthis is another line\n');
+      stream.push(null);
+      let result = '';
+      stream.pipe(createFilterStream(undefined, () => {
+        stream.emit('end');
+        stream.destroy();
+      },  2)).on('data', d => {
+        result += d.toString();
+      }).on('end', () => {
+        expect(result).to.equal('hi there\nthis is a line\n');
+        done();
+      });
+    });
+
+    it('should create a stream filter by filtering by lines and keyword', done => {
+      const stream = new Readable();
+      stream.setEncoding('utf-8');
+      stream.push('hi there\nthis is a line\nthis is another line\n');
+      stream.push(null);
+      let result = '';
+      stream.pipe(createFilterStream('this', () => {
+        stream.emit('end');
+        stream.destroy();
+      },  1)).on('data', d => {
+        result += d.toString();
+      }).on('end', () => {
+        expect(result).to.equal('this is a line\n');
+        done();
+      });
     });
   });
 
@@ -99,6 +150,34 @@ describe('utils', () => {
     }).on('end', () => {
       expect(result).to.equal('hi\nsecond line');
       done();
+    });
+  });
+
+  it('should read a file backwards and should not alter the number of newlines', async () => {
+    const testFile = 'test/fixture.txt';
+    const { size } = await fs.stat(testFile);
+    const stream = new ReadStreamBackwards(testFile, {
+      size
+    });
+
+    stream.setEncoding('utf-8');
+
+    let result = '';
+    stream.on('data', data => {
+      result += data.toString();
+    });
+
+    return new Promise((resolve, reject) => {
+      stream.on('end', () => {
+        try {
+          const matches = result.match(/\n/g);
+          expect(matches).to.not.be.null;
+          expect(matches!.length).to.equal(3);
+          resolve();
+        } catch(e) {
+          reject(e);
+        }
+      });
     });
   });
 });
