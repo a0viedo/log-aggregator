@@ -11,13 +11,15 @@
     "start": "node -r dotenv/config dist/index.js",
     "dev": "ts-node-dev -r dotenv/config --files -- src/index.ts | npx pino-pretty",
     "dev:client": "PRIMARY=http://localhost:3000 READ_DIR=test-client2 ts-node-dev -r dotenv/config --files -- src/index.ts | npx pino-pretty",
-    "lint": "eslint . --ext .ts"
+    "lint": "eslint . --ext .ts",
+    "ts-node": "ts-node"
   },
   "keywords": [],
   "author": "alejandro.oviedo.g@gmail.com",
   "license": "MIT",
   "dependencies": {
     "fastify": "^3.6.0",
+    "googleapis": "^65.0.0",
     "pino": "^6.7.0",
     "socket.io": "^2.3.0",
     "socket.io-client": "^2.3.1",
@@ -35,6 +37,7 @@
     "@types/uuid": "^8.3.0",
     "@typescript-eslint/eslint-plugin": "^4.4.1",
     "@typescript-eslint/parser": "^4.4.1",
+    "axios": "^0.21.0",
     "chai": "^4.2.0",
     "chai-spies": "^1.0.0",
     "dotenv": "^8.2.0",
@@ -60,6 +63,6 @@
     ]
   },
   "engines": {
-    "node" : ">15.x"
+    "node": ">15.x"
   }
 }
