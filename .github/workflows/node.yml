@@ -28,6 +28,10 @@ jobs:
         uses: actions/setup-node@v1
         with:
           node-version: '15.x'
+
+      - name: View env
+        run: echo $NODE_ENV
+
       - name: Install deps
         run: npm ci
 
