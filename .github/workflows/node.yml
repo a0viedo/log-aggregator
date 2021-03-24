@@ -29,8 +29,8 @@ jobs:
         with:
           node-version: '15.x'
 
-      - name: View env
-        run: echo "the env variable is $NODE_ENV"
+      - name: Either npm v7 is broken or there are unnecessary breaking changes that are misleading
+        run: npm i npm@6 -g
 
       - name: Install deps
         run: npm ci
